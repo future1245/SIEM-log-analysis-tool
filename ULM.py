@@ -1,18 +1,19 @@
 import time
 import json
-import syslog_processor 
+import syslog_processor
 import auth_processor
-import suricata_processor 
+import suricata_processor
 
-    #logs that are analysed 
+
 def main():
+    # logs that are analysed
     files = {
         "SYSLOG": open("/var/log/syslog"),
         "AUTH": open("/var/log/auth.log"),
         "SURICATA": open("/var/log/suricata/eve.json"),
     }
 
-    # go to the bottom of the log 
+    # go to the bottom of the log
     for f in files.values():
         f.seek(0, 2)
 
@@ -34,7 +35,6 @@ def main():
                     timestamp = " ".join(parts[0:3])
                     service_part = parts[4]
                     message = " ".join(parts[5:])
-
                     service = service_part.split("[")[0].replace(":", "")
 
                     unified_log = {
@@ -57,16 +57,12 @@ def main():
                         "message": message
                     }
 
-                    #processor.analysis(unified_log)
-
                 # -------------------- AUTH.LOG --------------------
                 elif name == "AUTH":
-                    raw = raw_line
-                    parts = raw.split()
+                    parts = raw_line.split()
                     if len(parts) < 5:
                         continue
 
-                    # ISO vs traditional timestamp
                     if parts[0].startswith("20"):
                         timestamp = parts[0]
                         message = " ".join(parts[1:])
@@ -74,11 +70,11 @@ def main():
                         timestamp = " ".join(parts[0:3])
                         message = " ".join(parts[3:])
 
-                    if "sudo:" in raw or "unix_chkpwd" in raw:
+                    if "sudo:" in raw_line or "unix_chkpwd" in raw_line:
                         service = "sudo"
-                    elif "sshd" in raw:
+                    elif "sshd" in raw_line:
                         service = "sshd"
-                    elif "CRON" in raw:
+                    elif "CRON" in raw_line:
                         service = "CRON"
                     else:
                         service = "auth"
@@ -102,7 +98,7 @@ def main():
                         "service": service,
                         "message": message
                     }
-                    
+
                     auth_processor.auth_analysis(unified_log)
 
                 # -------------------- SURICATA --------------------
@@ -159,13 +155,14 @@ def main():
                     suricata_processor.dns_analysis(unified_log)
                     suricata_processor.http_analysis(unified_log)
                     suricata_processor.https_analysis(unified_log)
-                    #print(unified_log)
+
             time.sleep(0.2)
 
     except KeyboardInterrupt:
         print("\n[INFO] Unified Log Monitor stopped safely.")
         for f in files.values():
             f.close()
+
 
 if __name__ == "__main__":
     main()
