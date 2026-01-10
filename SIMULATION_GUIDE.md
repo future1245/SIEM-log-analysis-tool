@@ -28,7 +28,7 @@ This is the guide for how to simulate the SIEM analysis and detection tool
 
 2.HOW TO SIMULATE EVE.JSON ANALYSIS IN SURICATA :
 
-    -->DETECT UNUSUAL OUTBOUND CONNECTION 
+    -->DETECT UNUSUAL PORT OUTBOUND CONNECTION 
 
     *type , nc google.com 4444
     *unsual outbound connection will be detected 
