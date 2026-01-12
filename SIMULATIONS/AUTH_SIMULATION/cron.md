@@ -1,9 +1,9 @@
-###FOR OPENING THE CORNTAB 
+### FOR OPENING THE CORNTAB 
 ```bash 
 crontab -e 
 ```
 
-###PASTE THIS IN THE CRONTAB
+### PASTE THIS IN THE CRONTAB
 
 ```bash 
 * * * * * echo test1 >> /tmp/cron1.log
