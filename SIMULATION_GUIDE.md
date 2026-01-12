@@ -1,18 +1,18 @@
 This is the guide for how to simulate the SIEM analysis and detection tool 
 
-##1.HOW TO SIMULATE AUTH.LOG ANALYSIS :
+## 1.HOW TO SIMULATE AUTH.LOG ANALYSIS :
 
-    ###SSH 
+    ### SSH 
     
     * type , ssh <username>@<ip>
     * you will be prompt to enter the password , if the password is wrong or the password is correct will be detected 
 
-    ###SUDO SU (privilage escalation) 
+    ### SUDO SU (privilage escalation) 
     
     * type , sudo su 
     * you will be prompt to enter the password , if the password is wrong or the password is correct will be detected
 
-    ###CRON 
+    ### CRON 
         
     * type , crontab -e
     * go to the bottom of the page opened and paste ,   * * * * * echo test1 >> /tmp/cron1.log
@@ -27,24 +27,24 @@ This is the guide for how to simulate the SIEM analysis and detection tool
 
 ---
 
-##2.HOW TO SIMULATE EVE.JSON ANALYSIS IN SURICATA :
+## 2.HOW TO SIMULATE EVE.JSON ANALYSIS IN SURICATA :
 
-    ###DETECT UNUSUAL PORT OUTBOUND CONNECTION 
+    ### DETECT UNUSUAL PORT OUTBOUND CONNECTION 
 
     *type , nc google.com 4444
     *unsual outbound connection will be detected 
 
-    ###EXCESSIVE OUTBOUND CONNECTION 
+    ### EXCESSIVE OUTBOUND CONNECTION 
 
     *type , for i in {1..12}; do curl -s http://example.com > /dev/null done
     *excessive outbound connection will be detected 
 
-    ###HIGH OUTBOUND DATA
+    ### HIGH OUTBOUND DATA
 
     *type , head -c 150000 /dev/urandom | curl -X POST http://httpbin.org/post --data-binary @-
     *high outbound connection will be detected 
 
-    ###DNS FLOODING 
+    ### DNS FLOODING 
 
     *type , for i in {1..30}; do            
             dig google.com > /dev/null
@@ -52,13 +52,13 @@ This is the guide for how to simulate the SIEM analysis and detection tool
     
     *the dns flooding will be detected 
 
-    ###HTTP FLOODING 
+    ### HTTP FLOODING 
 
     *type , for i in {1..30}; do curl http://example.com >/dev/null; done
 
     *the http flooding will be detected 
 
-    ###HTTPS SNI DETECTION
+    ### HTTPS SNI DETECTION
 
     *type , curl https://google.com
             curl https://github.com
