@@ -56,6 +56,10 @@ def main():
                         "service": service,
                         "message": message
                     }
+                    print(unified_log)
+                    syslog_processor.service_analysis(unified_log)
+                    syslog_processor.time_tampering_analysis(unified_log)
+                   
 
                 # -------------------- AUTH.LOG --------------------
                 elif name == "AUTH":

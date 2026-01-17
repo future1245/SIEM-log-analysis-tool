@@ -47,7 +47,7 @@ def outbound_analysis(log):
     now = time.time()
 
     #----------Rule 1: Unusual port----------
-    if dest_port not in [80, 443, 53]:
+    if dest_port not in [80, 443, 53 , 5353 , 1900]:
         last = last_unusual_alert.get(src_ip, 0)
         if now - last > COOLDOWN:
             print(f"[ALERT] Unusual outbound connection attempt: {src_ip} → {dest_ip}:{dest_port}")
