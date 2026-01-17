@@ -1,0 +1,168 @@
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SIEM Dashboard Design System - SOC-oriented dark theme */
+
+@layer base {
+  :root {
+    --background: 222 47% 6%;
+    --foreground: 210 20% 92%;
+
+    --card: 222 47% 8%;
+    --card-foreground: 210 20% 92%;
+
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 199 89% 48%;
+    --primary-foreground: 222 47% 6%;
+
+    --secondary: 222 30% 14%;
+    --secondary-foreground: 210 20% 85%;
+
+    --muted: 222 30% 12%;
+    --muted-foreground: 215 15% 55%;
+
+    --accent: 222 30% 16%;
+    --accent-foreground: 210 20% 92%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 14%;
+    --ring: 199 89% 48%;
+
+    --radius: 0.5rem;
+
+    /* Severity Colors */
+    --severity-critical: 0 72% 51%;
+    --severity-alert: 25 95% 53%;
+    --severity-warning: 45 93% 47%;
+    --severity-info: 199 89% 48%;
+    --severity-success: 142 71% 45%;
+
+    /* Status Colors */
+    --status-normal: 142 71% 45%;
+    --status-suspicious: 45 93% 47%;
+    --status-attack: 0 72% 51%;
+
+    /* Chart Colors */
+    --chart-1: 199 89% 48%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 45 93% 47%;
+    --chart-4: 25 95% 53%;
+    --chart-5: 0 72% 51%;
+
+    /* Terminal/Log styling */
+    --terminal-bg: 222 47% 5%;
+    --terminal-text: 120 100% 75%;
+    --terminal-border: 222 30% 15%;
+
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 20% 75%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 222 47% 6%;
+    --sidebar-accent: 222 30% 12%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 222 30% 15%;
+    --sidebar-ring: 199 89% 48%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 20% 92%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Custom scrollbar for SOC aesthetic */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
+
+@layer components {
+  .severity-badge-critical {
+    @apply bg-[hsl(var(--severity-critical)/0.15)] text-[hsl(var(--severity-critical))] border border-[hsl(var(--severity-critical)/0.3)];
+  }
+
+  .severity-badge-alert {
+    @apply bg-[hsl(var(--severity-alert)/0.15)] text-[hsl(var(--severity-alert))] border border-[hsl(var(--severity-alert)/0.3)];
+  }
+
+  .severity-badge-warning {
+    @apply bg-[hsl(var(--severity-warning)/0.15)] text-[hsl(var(--severity-warning))] border border-[hsl(var(--severity-warning)/0.3)];
+  }
+
+  .severity-badge-info {
+    @apply bg-[hsl(var(--severity-info)/0.15)] text-[hsl(var(--severity-info))] border border-[hsl(var(--severity-info)/0.3)];
+  }
+
+  .severity-badge-success {
+    @apply bg-[hsl(var(--severity-success)/0.15)] text-[hsl(var(--severity-success))] border border-[hsl(var(--severity-success)/0.3)];
+  }
+
+  .log-terminal {
+    @apply bg-[hsl(var(--terminal-bg))] border border-[hsl(var(--terminal-border))] font-mono text-sm;
+  }
+
+  .stat-card {
+    @apply bg-card border border-border rounded-lg p-4 transition-all duration-200 hover:border-primary/30;
+  }
+
+  .glow-critical {
+    box-shadow: 0 0 20px hsl(var(--severity-critical) / 0.3);
+  }
+
+  .glow-alert {
+    box-shadow: 0 0 20px hsl(var(--severity-alert) / 0.3);
+  }
+
+  .glow-success {
+    box-shadow: 0 0 15px hsl(var(--severity-success) / 0.2);
+  }
+
+  .pulse-critical {
+    animation: pulse-critical 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-critical {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+}
