@@ -1,4 +1,6 @@
 import time
+from sender import send_alert
+
 
 #resources for outbound network detection 
 outbound_events = {}   # src_ip -> list of timestamps
@@ -52,6 +54,15 @@ def outbound_analysis(log):
         if now - last > COOLDOWN:
             print(f"[ALERT] Unusual outbound connection attempt: {src_ip} → {dest_ip}:{dest_port}")
             last_unusual_alert[src_ip] = now
+    
+            send_alert(
+            severity="WARNING",
+            detection="Unusual Network Activity",
+            alert_type="IP",
+            entity=dest_ip,
+            reason="Outbound connection to multicast address"
+        )
+
 
     #----------Rule 2: Connection burst----------
     outbound_events.setdefault(src_ip, []).append(now)
@@ -63,12 +74,31 @@ def outbound_analysis(log):
         print(f"[ALERT] Excessive outbound connections from {src_ip}")
         outbound_events[src_ip].clear()
 
+        send_alert(
+        severity="WARNING",
+        detection="Excessive Outbound Connections",
+        alert_type="IP",
+        entity=src_ip,
+        reason=f"{CONN_THRESHOLD} outbound connections "
+    )
+
+
     #----------Rule 3: Data exfil----------
     data_sent[src_ip] = data_sent.get(src_ip, 0) + bytes_out
 
     if data_sent[src_ip] >= DATA_THRESHOLD:
         print(f"[ALERT] High outbound data from {src_ip}")
         data_sent[src_ip] = 0
+
+        send_alert(
+        severity="WARNING",
+        detection="High Outbound Data Transfer",
+        alert_type="IP",
+        entity=src_ip,
+        reason=f"{DATA_THRESHOLD} bytes sent outbound"
+
+)
+
 
 #--------------------DNS FLOODING DETECTION--------------------
 
@@ -95,6 +125,15 @@ def dns_analysis(log):
               f"({len(dns_events[src_ip])} queries in {DNS_WINDOW}s)")
         dns_events[src_ip].clear()
 
+        send_alert(
+        severity="CRITICAL",
+        detection="DNS Flooding",
+        alert_type="IP",
+        entity=src_ip,
+        reason=f"{DNS_THRESHOLD} DNS queries IN {DNS_WINDOW}"
+)
+
+
 #--------------------HTTP FLOODING DETECTION--------------------
 
 
@@ -116,6 +155,15 @@ def http_analysis(log):
     if len(http_events[src_ip]) >= HTTP_THRESHOLD:
         print(f"[ALERT] Possible HTTP flood from {src_ip}")
         http_events[src_ip].clear()
+
+        send_alert(
+        severity="ALERT",
+        detection="HTTP Flooding",
+        alert_type="IP",
+        entity=src_ip,
+        reason=f"{HTTP_THRESHOLD} HTTP requests in {HTTP_WINDOW}s"
+)
+
 
 #--------------------HTTPS SNI DETECTION--------------------
 
@@ -145,3 +193,12 @@ def https_analysis(log):
         print(f"[ALERT] Excessive HTTPS domains from {src_ip}")
         print(f" Domains: {list(https_sni_events[src_ip].keys())}")
         https_sni_events[src_ip].clear()
+
+        send_alert(
+        severity="ALERT",
+        detection="Suspicious HTTPS SNI Activity",
+        alert_type="IP",
+        entity=src_ip,
+        reason=f"{HTTPS_SNI_THRESHOLD} TLS SNI requests in {HTTPS_WINDOW}s"
+)
+

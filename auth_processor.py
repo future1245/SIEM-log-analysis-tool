@@ -1,4 +1,5 @@
 import time
+from sender import send_alert
 
 cron_events = []
 
@@ -23,8 +24,24 @@ def auth_analysis(log):
             ssh_fail_count += 1
             print(f"[DETECTED] Failed SSH login (count={ssh_fail_count})")
 
+            send_alert(
+            severity="CRITICAL",
+            detection="SSH Brute Force",
+            alert_type="IP",
+            entity="auth.log",
+            reason=f"{ssh_fail_count} failed SSH logins"
+)
         elif "session opened" in message:
             print("[DETECTED] Successful SSH login")
+
+            send_alert(
+            severity="INFO",
+            detection="SSH SUCCESSFUL LOG IN ATTEMPT",
+            alert_type="IP",
+            entity="auth.log",
+            reason=f"{ssh_fail_count} successful SSH login"
+)
+
 
     # ---------- SUDO ----------
     elif service == "sudo":
@@ -41,8 +58,25 @@ def auth_analysis(log):
             sudo_fail_count += 1
             print(f"[DETECTED] Failed sudo attempt (count={sudo_fail_count})")
 
+            send_alert(
+            severity="WARNING",
+            detection="Privilege Escalation Brute Force",
+            alert_type="User",
+            entity="auth.log",
+            reason=f"{sudo_fail_count} failed sudo su attempts"
+        )
+
+
         elif "session opened" in message:
             print("[DETECTED] Privilege escalation (sudo)")
+
+            send_alert(
+            severity="INFO",
+            detection="Privilege Escalation BY USER",
+            alert_type="User",
+            entity="auth.log",
+            reason=f"{sudo_fail_count} successful sudo su attempt"
+        )
 
     # ---------- CRON ----------
     elif service == "CRON":
@@ -59,9 +93,27 @@ def auth_analysis(log):
 
                 if len(cron_events) >= CRON_THRESHOLD:
                     print("[ALERT] Excessive cron executions detected")
+                
+                send_alert(
+                severity="ALERT",
+                detection="Cron Execution Burst",
+                alert_type="Service",
+                entity="cron.service",
+                reason=f"{CRON_THRESHOLD} cron executions in {TIME_WINDOW}s"
+                )
 
                 if "user root" in message:
-                    print("[ALERT] Cron job running as ROOT")
+                    print("[ALERT] Cron Job running as ROOT")
+
+                send_alert(
+                severity="INFO",
+                detection="Cron Job Excecuted",
+                alert_type="Service",
+                entity="cron.service",
+                reason="Cron Job Executed"
+                )
+
+
 
 
 
