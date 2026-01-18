@@ -1,59 +1,47 @@
-import { Alert, SeverityLevel } from '@/types/siem';
-import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Alert } from "@/types/siem";
+import { SeverityBadge } from "@/components/alerts/SeverityBadge";
 
 interface RecentAlertsProps {
   alerts: Alert[];
 }
 
-const severityBadgeClass: Record<SeverityLevel, string> = {
-  CRITICAL: 'severity-badge-critical',
-  ALERT: 'severity-badge-alert',
-  WARNING: 'severity-badge-warning',
-  INFO: 'severity-badge-info',
-};
-
 export function RecentAlerts({ alerts }: RecentAlertsProps) {
   return (
-    <div className="stat-card">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-foreground">Recent Alerts</h3>
-        <Link 
-          to="/alerts" 
-          className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
-        >
-          View all <ChevronRight className="w-3 h-3" />
-        </Link>
+    <div className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="px-6 py-4 border-b border-border">
+        <h3 className="text-sm uppercase tracking-wider text-muted-foreground">
+          Recent Alerts
+        </h3>
       </div>
-      <div className="space-y-2">
-        {alerts.slice(0, 5).map((alert, index) => (
-          <motion.div
+
+      {alerts.length === 0 && (
+        <div className="px-6 py-4 text-sm text-muted-foreground">
+          No alerts yet
+        </div>
+      )}
+
+      <div className="divide-y divide-border">
+        {alerts.map((alert) => (
+          <div
             key={alert.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="flex items-center gap-3 p-2 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
+            className="px-6 py-4 flex items-center justify-between"
           >
-            <span className={cn(
-              'px-2 py-0.5 rounded text-[10px] font-semibold uppercase',
-              severityBadgeClass[alert.severity]
-            )}>
-              {alert.severity}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-foreground truncate">{alert.reason}</p>
-              <p className="text-xs text-muted-foreground">
-                {alert.user && `User: ${alert.user}`}
-                {alert.user && alert.service && ' • '}
-                {alert.service && `Service: ${alert.service}`}
-              </p>
+            <div>
+              <div className="text-sm font-medium">
+                {alert.detectionType}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {alert.reason}
+              </div>
             </div>
-            <span className="text-xs text-muted-foreground font-mono">
-              {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </motion.div>
+
+            <div className="flex items-center gap-4">
+              <SeverityBadge severity={alert.severity} size="sm" />
+              <div className="text-xs text-muted-foreground font-mono">
+                {new Date(alert.timestamp).toLocaleTimeString()}
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     </div>

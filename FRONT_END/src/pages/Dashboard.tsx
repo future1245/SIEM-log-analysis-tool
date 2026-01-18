@@ -1,123 +1,65 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { AlertCounter } from "@/components/dashboard/AlertCounter";
-import { SeverityBadge } from "@/components/alerts/SeverityBadge";
+import { SecurityPostureIndicator } from "@/components/dashboard/SecurityPostureIndicator";
+import { AlertsChart } from "@/components/dashboard/AlertsChart";
+import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
+import { Alert, SecurityPosture } from "@/types/siem";
 
-const BACKEND_BASE = "http://127.0.0.1:5000/api";
-
-interface Alert {
-  id: string;
-  timestamp: string;
-  severity: string;
-  detectionType: string;
-  reason: string;
-  service?: string | null;
-  user?: string | null;
-  sourceIp?: string | null;
-}
+const BACKEND = "http://127.0.0.1:5000/api";
 
 export default function Dashboard() {
-  const [summary, setSummary] = useState<any>(null);
-  const [posture, setPosture] = useState<string>("UNKNOWN");
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [posture, setPosture] = useState<SecurityPosture>("NORMAL");
+  const [summary, setSummary] = useState<any>(null);
 
   useEffect(() => {
-    fetchSummary();
-    fetchPosture();
-    fetchAlerts();
-
-    const interval = setInterval(() => {
-      fetchSummary();
-      fetchPosture();
-      fetchAlerts();
-    }, 3000);
-
-    return () => clearInterval(interval);
+    fetchAll();
+    const i = setInterval(fetchAll, 3000);
+    return () => clearInterval(i);
   }, []);
 
-  const fetchSummary = async () => {
-    const res = await fetch(`${BACKEND_BASE}/summary`);
-    const data = await res.json();
-    setSummary(data);
-  };
+  const fetchAll = async () => {
+    const [a, s, p] = await Promise.all([
+      fetch(`${BACKEND}/alerts`).then(r => r.json()),
+      fetch(`${BACKEND}/summary`).then(r => r.json()),
+      fetch(`${BACKEND}/posture`).then(r => r.json()),
+    ]);
 
-  const fetchPosture = async () => {
-    const res = await fetch(`${BACKEND_BASE}/posture`);
-    const data = await res.json();
-    setPosture(data.posture);
-  };
+    setAlerts(a);
+    setSummary(s);
 
-  const fetchAlerts = async () => {
-    const res = await fetch(`${BACKEND_BASE}/alerts`);
-    const data = await res.json();
-    setAlerts(data.slice(-5).reverse()); // last 5 alerts
+    // 🔥 NORMALIZE BACKEND → FRONTEND
+    if (p.posture === "CRITICAL") setPosture("UNDER_ATTACK");
+    else if (p.posture === "SUSPICIOUS") setPosture("SUSPICIOUS");
+    else setPosture("NORMAL");
   };
 
   return (
     <div className="flex flex-col h-full">
-      <Header
-        title="Dashboard"
-        subtitle="SIEM overview & security posture"
-      />
+      <Header title="Security Dashboard" subtitle="Live SIEM Overview" />
 
       <div className="flex-1 p-6 space-y-6 overflow-auto">
-
-        {/* Security Posture */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            Security Posture
-          </h3>
-          <div className="text-2xl font-bold">
-            {posture}
+        {/* Top */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-2">
+            <SecurityPostureIndicator status={posture} />
           </div>
+
+          {summary && (
+            <>
+              <AlertCounter label="Critical" count={summary.critical} severity="critical" />
+              <AlertCounter label="Alerts" count={summary.alert} severity="alert" />
+              <AlertCounter label="Warnings" count={summary.warning} severity="warning" />
+            </>
+          )}
         </div>
 
-        {/* Alert Counters */}
-        {summary && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <AlertCounter label="Critical" count={summary.critical} severity="critical" />
-            <AlertCounter label="Alerts" count={summary.alert} severity="alert" />
-            <AlertCounter label="Warnings" count={summary.warning} severity="warning" />
-            <AlertCounter label="Info" count={summary.info} severity="info" />
-          </div>
-        )}
-
-        {/* Recent Alerts */}
-        <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-border">
-            <h3 className="text-sm uppercase tracking-wider text-muted-foreground">
-              Recent Alerts
-            </h3>
-          </div>
-
-          <div className="divide-y divide-border">
-            {alerts.length === 0 && (
-              <div className="px-6 py-4 text-muted-foreground text-sm">
-                No alerts received yet
-              </div>
-            )}
-
-            {alerts.map((alert) => (
-              <div key={alert.id} className="px-6 py-4 flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium">
-                    {alert.detectionType}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {alert.reason}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-xs text-muted-foreground font-mono">
-                    {new Date(alert.timestamp).toLocaleTimeString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Chart + Alerts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <AlertsChart alerts={alerts} />
+          <RecentAlerts alerts={alerts.slice(-5).reverse()} />
         </div>
-
       </div>
     </div>
   );
