@@ -1,4 +1,3 @@
-import { Alert } from "@/types/siem";
 import {
   BarChart,
   Bar,
@@ -6,48 +5,62 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  Tooltip,
 } from "recharts";
 
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+
 interface AlertsChartProps {
-  alerts: Alert[];
+  data: {
+    time: string;
+    critical: number;
+    alert: number;
+    warning: number;
+  }[];
 }
 
-export function AlertsChart({ alerts }: AlertsChartProps) {
-  // bucket alerts by hour
-  const buckets: Record<string, any> = {};
+const chartConfig = {
+  critical: {
+    label: "Critical",
+    color: "hsl(0, 72%, 51%)",
+  },
+  alert: {
+    label: "Alert",
+    color: "hsl(25, 95%, 53%)",
+  },
+  warning: {
+    label: "Warning",
+    color: "hsl(48, 96%, 53%)",
+  },
+};
 
-  alerts.forEach((a) => {
-    const hour = new Date(a.timestamp).getHours().toString().padStart(2, "0") + ":00";
-
-    if (!buckets[hour]) {
-      buckets[hour] = { time: hour, critical: 0, alert: 0, warning: 0 };
-    }
-
-    if (a.severity === "CRITICAL") buckets[hour].critical++;
-    if (a.severity === "ALERT") buckets[hour].alert++;
-    if (a.severity === "WARNING") buckets[hour].warning++;
-  });
-
-  const chartData = Object.values(buckets);
-
+export function AlertsChart({ data }: AlertsChartProps) {
   return (
-    <div className="bg-card border border-border rounded-lg p-6">
-      <h3 className="text-sm font-semibold mb-4">
-        Alerts Over Time
+    <div className="stat-card">
+      <h3 className="text-sm font-semibold text-foreground mb-3">
+        Alerts Over Time (24h)
       </h3>
 
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="time" />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="critical" stackId="a" fill="#ef4444" />
-          <Bar dataKey="alert" stackId="a" fill="#f97316" />
-          <Bar dataKey="warning" stackId="a" fill="#eab308" />
-        </BarChart>
-      </ResponsiveContainer>
+      {/* 🔒 FIXED HEIGHT CONTAINER */}
+      <div className="h-[220px] w-full">
+        <ChartContainer config={chartConfig} className="h-full w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="time" fontSize={12} />
+              <YAxis fontSize={12} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+
+              <Bar dataKey="critical" stackId="a" fill="var(--color-critical)" />
+              <Bar dataKey="alert" stackId="a" fill="var(--color-alert)" />
+              <Bar dataKey="warning" stackId="a" fill="var(--color-warning)" />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+      </div>
     </div>
   );
 }
