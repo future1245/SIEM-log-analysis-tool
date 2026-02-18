@@ -15,24 +15,43 @@ def receive_alert():
     alert = {
         "id": str(uuid.uuid4()),
         "timestamp": datetime.utcnow().isoformat(),
-        "severity": data.get("severity", "INFO"),  # CRITICAL | ALERT | WARNING | INFO
+        "severity": data.get("severity", "INFO"),
         "detectionType": data.get("detection", "Unknown"),
         "reason": data.get("reason", ""),
-        "service": data["entity"] if data.get("type") == "Service" else None,
-        "user": data["entity"] if data.get("type") == "User" else None,
-        "sourceIp": data["entity"] if data.get("type") == "IP" else None,
+        "service": data.get("service"),
+        "user": data.get("user"),
+        "sourceIp": data.get("ip"),
+        "rawLog": data.get("rawLog", "")
     }
 
     ALERTS.append(alert)
     return {"status": "ok"}, 200
 
 
-@app.route("/api/alerts", methods=["GET"])
+@app.route("/api/alerts")
 def get_alerts():
     return jsonify(ALERTS)
 
 
-@app.route("/api/summary", methods=["GET"])
+@app.route("/api/search")
+def search():
+    query = request.args.get("q", "").lower()
+    if not query:
+        return jsonify([])
+
+    results = [
+        a for a in ALERTS
+        if query in (a.get("reason","").lower())
+        or query in (a.get("detectionType","").lower())
+        or query in (a.get("user","") or "").lower()
+        or query in (a.get("service","") or "").lower()
+        or query in (a.get("sourceIp","") or "").lower()
+        or query in (a.get("rawLog","") or "").lower()
+    ]
+    return jsonify(results)
+
+
+@app.route("/api/summary")
 def summary():
     return {
         "total": len(ALERTS),
@@ -43,7 +62,7 @@ def summary():
     }
 
 
-@app.route("/api/posture", methods=["GET"])
+@app.route("/api/posture")
 def posture():
     if any(a["severity"] == "CRITICAL" for a in ALERTS):
         return {"posture": "UNDER_ATTACK"}
@@ -53,4 +72,4 @@ def posture():
 
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=False)
+    app.run(port=5000)
