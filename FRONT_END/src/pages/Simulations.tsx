@@ -1,38 +1,108 @@
-import { Header } from '@/components/layout/Header';
-import { SimulationCard } from '@/components/simulations/SimulationCard';
-import { mockSimulations } from '@/data/mockData';
-import { AlertTriangle } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
-const Simulations = () => {
-  return (
-    <div className="flex flex-col h-full">
-      <Header 
-        title="Simulations" 
-        subtitle="Run attack simulations to test detection capabilities" 
-      />
-      
-      <div className="flex-1 p-6 overflow-auto space-y-6">
-        {/* Warning Banner */}
-        <div className="p-4 rounded-lg border border-severity-warning/30 bg-severity-warning/5 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-severity-warning shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-semibold text-severity-warning">Simulation Mode</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              These simulations trigger your backend detection engine. Alerts generated are labeled as simulation events. 
-              Use in a controlled environment only.
-            </p>
-          </div>
-        </div>
+const simulations = [
+ {
+  name: "DNS Flood",
+  description:
+   "Simulates high-volume DNS requests to suspicious domains to test detection of potential C2 beaconing and DNS anomalies.",
+ },
+ {
+  name: "HTTP Flood",
+  description:
+   "Generates a large number of HTTP requests to simulate a web layer DoS attack and test anomaly detection.",
+ },
+ {
+  name: "HTTPS Abuse",
+  description:
+   "Simulates suspicious HTTPS traffic patterns such as encrypted command-and-control communications.",
+ },
+ {
+  name: "SSH Brute Force",
+  description:
+   "Generates repeated failed SSH login attempts to simulate brute force authentication attacks.",
+ },
+ {
+  name: "Privilege Escalation",
+  description:
+   "Simulates a user attempting to gain elevated privileges using sudo or misconfigured permissions.",
+ },
+ {
+  name: "Log Tampering",
+  description:
+   "Simulates unauthorized modification or deletion of system logs to test integrity monitoring.",
+ },
+ {
+  name: "DNS Data Exfiltration",
+  description:
+   "Simulates data exfiltration through encoded DNS queries to mimic stealthy attacker techniques.",
+ },
+ {
+  name: "Suspicious Command Execution",
+  description:
+   "Simulates execution of encoded or obfuscated shell commands commonly used by attackers.",
+ },
+];
 
-        {/* Simulations Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {mockSimulations.map((simulation, index) => (
-            <SimulationCard key={simulation.id} simulation={simulation} index={index} />
-          ))}
-        </div>
+export default function Simulations() {
+
+ const runSimulation = async (name: string) => {
+  console.log("Running simulation:", name);
+
+  try {
+   const res = await fetch("http://127.0.0.1:5000/api/simulate", {
+    method: "POST",
+    headers: {
+     "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+     type: name,
+    }),
+   });
+
+   const data = await res.json();
+
+   console.log("Simulation result:", data);
+
+   alert(`${data.alerts_created} alerts generated`);
+
+  } catch (err) {
+   console.error("Simulation failed:", err);
+   alert("Simulation failed. Check backend.");
+  }
+ };
+
+ return (
+  <div className="p-6 space-y-6">
+   <div>
+    <h1 className="text-2xl font-semibold">Threat Simulations</h1>
+    <p className="text-muted-foreground mt-1">
+     Run controlled attack scenarios to test SIEM detection capabilities.
+    </p>
+   </div>
+
+   {/* Simulation Grid */}
+   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    {simulations.map((sim) => (
+     <div
+      key={sim.name}
+      className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between"
+     >
+      <div>
+       <h2 className="text-lg font-semibold">{sim.name}</h2>
+       <p className="text-sm text-muted-foreground mt-2">
+        {sim.description}
+       </p>
       </div>
-    </div>
-  );
-};
 
-export default Simulations;
+      <Button
+       className="mt-4 w-full"
+       onClick={() => runSimulation(sim.name)}
+      >
+       Run Simulation
+      </Button>
+     </div>
+    ))}
+   </div>
+  </div>
+ );
+}

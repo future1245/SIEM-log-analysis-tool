@@ -4,13 +4,15 @@ import {
   AlertTriangle,
   Search,
   Activity,
+  FlaskConical
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/alerts", icon: AlertTriangle, label: "Live Alerts" },
-  { path: "/search", icon: Search, label: "Search" }, // ✅ Added Search
+  { path: "/search", icon: Search, label: "Search" },
+  { path: "/simulation", icon: FlaskConical, label: "Simulation" }, // ✅ Added Simulation
 ];
 
 export function Sidebar() {
@@ -24,9 +26,14 @@ export function Sidebar() {
         <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
           <Activity className="w-5 h-5 text-primary-foreground" />
         </div>
+
         <div>
-          <h1 className="text-sm font-semibold text-foreground">SIEM Dashboard</h1>
-          <p className="text-xs text-muted-foreground">Security Operations</p>
+          <h1 className="text-sm font-semibold text-foreground">
+            SIEM Dashboard
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            Security Operations
+          </p>
         </div>
       </div>
 
@@ -46,7 +53,9 @@ export function Sidebar() {
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
-              <item.icon className={cn("w-4 h-4", isActive && "text-sidebar-primary")} />
+              <item.icon
+                className={cn("w-4 h-4", isActive && "text-sidebar-primary")}
+              />
               {item.label}
             </NavLink>
           );
@@ -60,6 +69,7 @@ export function Sidebar() {
           <span>Backend Connected</span>
         </div>
       </div>
+
     </aside>
   );
 }

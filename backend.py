@@ -8,6 +8,7 @@ CORS(app)
 
 ALERTS = []
 
+
 @app.route("/api/alert", methods=["POST"])
 def receive_alert():
     data = request.json
@@ -25,7 +26,34 @@ def receive_alert():
     }
 
     ALERTS.append(alert)
+
     return {"status": "ok"}, 200
+
+
+# Simulation endpoint (now generates ONLY 1 alert)
+@app.route("/api/simulate", methods=["POST"])
+def simulate():
+
+    data = request.json
+    sim_type = data.get("type", "Unknown Simulation")
+
+    alert = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.utcnow().isoformat(),
+        "severity": "ALERT",
+        "detectionType": sim_type,
+        "reason": f"Simulated {sim_type} activity detected",
+        "service": "simulation-engine",
+        "user": "attacker",
+        "sourceIp": "192.168.1.10",
+        "rawLog": f"{sim_type} simulated event"
+    }
+
+    ALERTS.append(alert)
+
+    return jsonify({
+        "alerts_created": 1
+    })
 
 
 @app.route("/api/alerts")
@@ -35,7 +63,9 @@ def get_alerts():
 
 @app.route("/api/search")
 def search():
+
     query = request.args.get("q", "").lower()
+
     if not query:
         return jsonify([])
 
@@ -54,6 +84,7 @@ def search():
 
 @app.route("/api/summary")
 def summary():
+
     return {
         "total": len(ALERTS),
         "critical": sum(a["severity"] == "CRITICAL" for a in ALERTS),
@@ -65,24 +96,22 @@ def summary():
 
 @app.route("/api/posture")
 def posture():
+
     critical_count = sum(a["severity"] == "CRITICAL" for a in ALERTS)
     alert_count = sum(a["severity"] == "ALERT" for a in ALERTS)
     warning_count = sum(a["severity"] == "WARNING" for a in ALERTS)
 
-    # UNDER ATTACK conditions
     if critical_count >= 2:
         return {"posture": "UNDER_ATTACK"}
 
     if alert_count >= 3:
         return {"posture": "UNDER_ATTACK"}
 
-    # Suspicious conditions
     if alert_count >= 1 or warning_count >= 1:
         return {"posture": "SUSPICIOUS"}
 
-    # Default
     return {"posture": "NORMAL"}
 
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run(port=5000, debug=True)
