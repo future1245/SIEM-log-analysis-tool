@@ -48,6 +48,7 @@ def search():
         or query in (a.get("sourceIp","") or "").lower()
         or query in (a.get("rawLog","") or "").lower()
     ]
+
     return jsonify(results)
 
 
@@ -64,10 +65,22 @@ def summary():
 
 @app.route("/api/posture")
 def posture():
-    if any(a["severity"] == "CRITICAL" for a in ALERTS):
+    critical_count = sum(a["severity"] == "CRITICAL" for a in ALERTS)
+    alert_count = sum(a["severity"] == "ALERT" for a in ALERTS)
+    warning_count = sum(a["severity"] == "WARNING" for a in ALERTS)
+
+    # UNDER ATTACK conditions
+    if critical_count >= 2:
         return {"posture": "UNDER_ATTACK"}
-    if any(a["severity"] in ["ALERT", "WARNING"] for a in ALERTS):
+
+    if alert_count >= 3:
+        return {"posture": "UNDER_ATTACK"}
+
+    # Suspicious conditions
+    if alert_count >= 1 or warning_count >= 1:
         return {"posture": "SUSPICIOUS"}
+
+    # Default
     return {"posture": "NORMAL"}
 
 

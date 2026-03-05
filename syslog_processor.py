@@ -2,9 +2,8 @@ import time
 from collections import defaultdict, deque
 from sender import send_alert
 
-
-SERVICE_WINDOW = 30     
-SERVICE_THRESHOLD = 9  
+SERVICE_WINDOW = 30
+SERVICE_THRESHOLD = 10
 
 service_restart_tracker = defaultdict(deque)
 
@@ -32,21 +31,20 @@ def service_analysis(unified_log):
             f"[CRITICAL] Service restart abuse detected: {service} "
             f"(~3 restarts in {SERVICE_WINDOW}s)"
         )
-    
         send_alert(
-        severity="ALERT",
-        detection="Service Restart Abuse",
-        alert_type="Service",
-        entity=service,
-        reason=f"{SERVICE_THRESHOLD} restarts in {SERVICE_WINDOW}s"
+            severity="WARNING",
+            detection="Service Restart Abuse",
+            alert_type="Service",
+            entity=service,
+            reason=f"{SERVICE_THRESHOLD} restarts in {SERVICE_WINDOW}s"
         )
 
 
 # ---- CONFIG ----
-TIME_WINDOW = 60        # seconds
-TIME_THRESHOLD = 2      # suspicious events
+TIME_WINDOW = 60
+TIME_THRESHOLD = 3
 LOG_WINDOW = 30
-LOG_THRESHOLD = 3
+LOG_THRESHOLD = 4
 
 # ---- TRACKERS ----
 time_events = deque()
@@ -68,12 +66,12 @@ TIME_KEYWORDS = {
     "set time"
 }
 
-
 ROTATION_KEYWORDS = {
     "logrotate",
     "rotating",
     "rotation"
 }
+
 
 def time_tampering_analysis(unified_log):
     service = unified_log.get("service", "").lower()
@@ -94,13 +92,12 @@ def time_tampering_analysis(unified_log):
             )
 
             send_alert(
-            severity="CRITICAL",
-            detection="Time Manipulation",
-            alert_type="User",
-            entity="root",
-            reason="Multiple system time changes detected"
-        )
-
+                severity="ALERT",
+                detection="Time Manipulation",
+                alert_type="User",
+                entity="root",
+                reason="Multiple system time changes detected"
+            )
 
     # ---- LOGGING SERVICE RESTART ----
     if service in LOGGING_SERVICES:
@@ -115,13 +112,13 @@ def time_tampering_analysis(unified_log):
                 f"({LOG_THRESHOLD} events in {LOG_WINDOW}s)"
             )
 
-        send_alert(
-            severity="WARNING",
-            detection="Logging Service Instability",
-            alert_type="Service",
-            entity=service,
-            reason=f"{LOG_THRESHOLD} logging service restarts in {LOG_WINDOW}s"
-        )
+            send_alert(
+                severity="ALERT",
+                detection="Logging Service Instability",
+                alert_type="Service",
+                entity=service,
+                reason=f"{LOG_THRESHOLD} logging service restarts in {LOG_WINDOW}s"
+            )
 
     # ---- LOG ROTATION BURST ----
     if any(keyword in message for keyword in ROTATION_KEYWORDS):
@@ -130,15 +127,15 @@ def time_tampering_analysis(unified_log):
         while log_events and now - log_events[0] > LOG_WINDOW:
             log_events.popleft()
 
-        if len(log_events) == LOG_THRESHOLD:
+        if len(log_events) == 5:
             print(
                 "[WARNING] Suspicious log rotation activity detected"
             )
 
             send_alert(
-            severity="WARNING",
-            detection="Suspicious Log Rotation",
-            alert_type="Service",
-            entity=service if service else "logrotate",
-            reason=f"{LOG_THRESHOLD} log rotation events in {LOG_WINDOW}s"
-        )
+                severity="WARNING",
+                detection="Suspicious Log Rotation",
+                alert_type="Service",
+                entity=service if service else "logrotate",
+                reason=f"5 log rotation events in {LOG_WINDOW}s"
+            )
