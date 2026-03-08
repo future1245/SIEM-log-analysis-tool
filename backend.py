@@ -2,11 +2,16 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
 import uuid
+import json
+import os
+import re
 
 app = Flask(__name__)
 CORS(app)
 
 ALERTS = []
+
+ALERTS_FOLDER = "Alerts"
 
 
 @app.route("/api/alert", methods=["POST"])
@@ -30,10 +35,8 @@ def receive_alert():
     return {"status": "ok"}, 200
 
 
-# Simulation endpoint (now generates ONLY 1 alert)
 @app.route("/api/simulate", methods=["POST"])
 def simulate():
-
     data = request.json
     sim_type = data.get("type", "Unknown Simulation")
 
@@ -63,7 +66,6 @@ def get_alerts():
 
 @app.route("/api/search")
 def search():
-
     query = request.args.get("q", "").lower()
 
     if not query:
@@ -71,12 +73,12 @@ def search():
 
     results = [
         a for a in ALERTS
-        if query in (a.get("reason","").lower())
-        or query in (a.get("detectionType","").lower())
-        or query in (a.get("user","") or "").lower()
-        or query in (a.get("service","") or "").lower()
-        or query in (a.get("sourceIp","") or "").lower()
-        or query in (a.get("rawLog","") or "").lower()
+        if query in (a.get("reason", "").lower())
+        or query in (a.get("detectionType", "").lower())
+        or query in (a.get("user", "") or "").lower()
+        or query in (a.get("service", "") or "").lower()
+        or query in (a.get("sourceIp", "") or "").lower()
+        or query in (a.get("rawLog", "") or "").lower()
     ]
 
     return jsonify(results)
@@ -84,7 +86,6 @@ def search():
 
 @app.route("/api/summary")
 def summary():
-
     return {
         "total": len(ALERTS),
         "critical": sum(a["severity"] == "CRITICAL" for a in ALERTS),
@@ -96,7 +97,6 @@ def summary():
 
 @app.route("/api/posture")
 def posture():
-
     critical_count = sum(a["severity"] == "CRITICAL" for a in ALERTS)
     alert_count = sum(a["severity"] == "ALERT" for a in ALERTS)
     warning_count = sum(a["severity"] == "WARNING" for a in ALERTS)
@@ -111,6 +111,33 @@ def posture():
         return {"posture": "SUSPICIOUS"}
 
     return {"posture": "NORMAL"}
+
+
+# SAVE ALERTS
+@app.route("/api/save", methods=["POST"])
+def save_alerts():
+
+    os.makedirs(ALERTS_FOLDER, exist_ok=True)
+
+    files = os.listdir(ALERTS_FOLDER)
+
+    numbers = []
+    for file in files:
+        match = re.match(r"alert(\d+)\.json", file)
+        if match:
+            numbers.append(int(match.group(1)))
+
+    next_number = max(numbers) + 1 if numbers else 1
+
+    filename = f"alert{next_number}.json"
+    filepath = os.path.join(ALERTS_FOLDER, filename)
+
+    with open(filepath, "w") as f:
+        json.dump(ALERTS, f, indent=4)
+
+    print("Saved file to:", filepath)
+
+    return {"status": "saved", "file": filename}
 
 
 if __name__ == "__main__":

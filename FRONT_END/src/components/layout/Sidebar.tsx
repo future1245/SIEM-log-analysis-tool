@@ -4,15 +4,18 @@ import {
   AlertTriangle,
   Search,
   Activity,
-  FlaskConical
+  FlaskConical,
+  Save
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/alerts", icon: AlertTriangle, label: "Live Alerts" },
   { path: "/search", icon: Search, label: "Search" },
-  { path: "/simulation", icon: FlaskConical, label: "Simulation" }, // ✅ Added Simulation
+  { path: "/simulation", icon: FlaskConical, label: "Simulation" },
+  { path: "/save", icon: Save, label: "Save Alerts" } // ✅ NEW
 ];
 
 export function Sidebar() {
@@ -54,8 +57,12 @@ export function Sidebar() {
               )}
             >
               <item.icon
-                className={cn("w-4 h-4", isActive && "text-sidebar-primary")}
+                className={cn(
+                  "w-4 h-4",
+                  isActive && "text-sidebar-primary"
+                )}
               />
+
               {item.label}
             </NavLink>
           );
