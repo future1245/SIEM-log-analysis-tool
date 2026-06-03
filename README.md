@@ -126,14 +126,14 @@ This SIEM prototype provides enterprises with a lightweight alternative to tradi
 - **Disk**: 20GB+ for log storage (depends on log volume)
 
 ### Software Dependencies
-- Node.js 16.0 or higher
 - Python 3.8 or higher
-- Suricata 6.0 or higher (for network detection)
+- Node.js 16.0 or higher
+- npm 8.0 or higher
 
 ### Supported Log Sources
 - **Authentication Logs**: `/var/log/auth.log`, `/var/log/secure`
 - **System Logs**: `/var/log/syslog`, `/var/log/messages`
-- **IDS/IPS**: Suricata EVE JSON output
+- **IDS/IPS**: Suricata EVE JSON output (optional)
 - **Custom Sources**: Syslog protocol support
 
 ## ⚙️ Installation
@@ -144,129 +144,121 @@ git clone https://github.com/future1245/SIEM-log-analysis-tool.git
 cd SIEM-log-analysis-tool
 ```
 
-### 2. Install Dependencies
+### 2. Create and Activate Virtual Environment
 ```bash
-# Install Node.js dependencies
-npm install
+# Create Python virtual environment
+python3 -m venv venv
 
-# Install Python dependencies
+# Activate virtual environment
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+### 3. Install Python Dependencies
+```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure Suricata Integration (Optional)
+### 4. Install Frontend Dependencies
 ```bash
-sudo apt-get install suricata
-sudo suricata -c /etc/suricata/suricata.yaml -i eth0
+cd FRONT_END
+npm install
+cd ..
 ```
 
-### 4. Build the Project
+### 5. Verify Installation
 ```bash
-npm run build
-```
+# Check Python dependencies
+pip list
 
-### 5. Start the Application
-```bash
-npm start
+# Check Node dependencies
+cd FRONT_END && npm list && cd ..
 ```
 
 ## 🔧 Configuration
 
-### Main Configuration File
-Create a `config.json` file in the root directory:
+### Main Configuration
+The application automatically detects and processes logs from:
+- `/var/log/auth.log` - Authentication events
+- `/var/log/syslog` - System events
+- Suricata EVE JSON (if enabled)
 
-```json
-{
-  "logSources": [
-    {
-      "name": "authentication",
-      "path": "/var/log/auth.log",
-      "type": "auth",
-      "enabled": true
-    },
-    {
-      "name": "system",
-      "path": "/var/log/syslog",
-      "type": "syslog",
-      "enabled": true
-    },
-    {
-      "name": "network",
-      "path": "/var/log/suricata/eve.json",
-      "type": "suricata",
-      "enabled": true
-    }
-  ],
-  "detection": {
-    "bruteForceThreshold": 5,
-    "bruteForceWindow": 300,
-    "privilegeEscalationTracking": true,
-    "cronMonitoring": true,
-    "networkThreatsEnabled": true
-  },
-  "alerts": {
-    "severityLevels": ["critical", "high", "medium", "low"],
-    "routingDestination": "console",
-    "webhookUrl": ""
-  }
-}
-```
+### Custom Log Paths
+Edit the respective processor files to configure custom log locations:
+- `auth_processor.py` - Authentication log paths
+- `syslog_processor.py` - System log paths
+- `suricata_processor.py` - Suricata log paths
 
 ### Rule Configuration
-Place custom detection rules in `rules/` directory in YAML format:
-
-```yaml
-rule:
-  name: "Multiple Failed Login Attempts"
-  id: "AUTH-001"
-  severity: "high"
-  description: "Detects brute-force login attempts"
-  conditions:
-    - field: "event_type"
-      operator: "equals"
-      value: "auth_failure"
-    - field: "count"
-      operator: "greater_than"
-      value: 5
-  window: 300
-  action: "alert"
-```
+Detection rules are managed through the analyzer. See `SIMULATION_GUIDE.md` for detailed rule configuration examples.
 
 ## 🚀 Usage
 
-### Start the SIEM Service
+### Quick Start (Recommended)
+After completing installation, start the entire application with a single command:
+
 ```bash
-npm start
+# Make the script executable (first time only)
+chmod +x run.sh
+
+# Start SIEM and frontend together
+./run.sh
 ```
 
-### Run Detection Engine
+This will:
+1. ✅ Activate the Python virtual environment
+2. ✅ Start the backend analyzer
+3. ✅ Start the frontend development server
+4. ✅ Automatically open the dashboard in your browser at `http://127.0.0.1:8080`
+
+### Manual Startup (Advanced)
+
+**Terminal 1 - Start the backend analyzer:**
 ```bash
-npm run detect
+source venv/bin/activate
+python backend.py
 ```
 
-### View Alerts
+**Terminal 2 - Start the SIEM engine and frontend:**
 ```bash
-npm run alerts
+source venv/bin/activate
+python main.py
 ```
 
-### Launch Web Dashboard
+The frontend will be available at `http://127.0.0.1:8080`
+
+### Running Individual Components
+
+**Run SIEM analyzer only:**
 ```bash
-npm run dashboard
-# Access at http://localhost:3000
+source venv/bin/activate
+python ULM.py
 ```
 
-### Query Logs
+**Run backend API only:**
 ```bash
-npm run query -- --source auth --timerange "last 1h"
+source venv/bin/activate
+python backend.py
+```
+
+**Run frontend development server only:**
+```bash
+cd FRONT_END
+npm run dev
+```
+
+### View Dashboard
+Once running, access the web dashboard:
+```
+http://127.0.0.1:8080
 ```
 
 ## 📊 Supported Log Sources
 
-| Source | Format | Purpose |
-|--------|--------|---------|
-| **Auth Logs** | Text/Syslog | Authentication events, login attempts, privilege escalation |
-| **System Logs** | Text/Syslog | System events, service changes, cron execution |
-| **Suricata** | JSON (EVE) | Network intrusion detection, protocol anomalies |
-| **Syslog** | Syslog Protocol | Remote log collection from network devices |
+| Source | File Path | Purpose |
+|--------|-----------|---------|
+| **Auth Logs** | `/var/log/auth.log` | Authentication events, login attempts, privilege escalation |
+| **System Logs** | `/var/log/syslog` | System events, service changes, cron execution |
+| **Suricata** | `/var/log/suricata/eve.json` | Network intrusion detection, protocol anomalies |
 
 ## 🎯 Detection Rules
 
@@ -274,7 +266,7 @@ npm run query -- --source auth --timerange "last 1h"
 
 #### 1. Brute-Force Detection
 - Monitors repeated authentication failures
-- Configurable failure threshold (default: 5 attempts in 5 minutes)
+- Configurable failure threshold
 - IP-based and user-based correlation
 - Automatic blocking recommendations
 
@@ -291,7 +283,6 @@ npm run query -- --source auth --timerange "last 1h"
 - Tracks timing anomalies
 
 #### 4. Network Threat Detection
-- Integrates Suricata ruleset
 - Detects known attack signatures
 - Identifies protocol violations
 - Alerts on suspicious network patterns
@@ -305,31 +296,63 @@ npm run query -- --source auth --timerange "last 1h"
 - **Storage**: 1-2GB per day (depends on configuration)
 
 ### Optimization Tips
-1. Tune log ingestion batch sizes
-2. Filter unnecessary log sources
-3. Configure appropriate retention policies
-4. Use database indexing for historical queries
+1. Configure appropriate log retention policies
+2. Enable only necessary log sources
+3. Tune analyzer batch processing sizes
+4. Use the `run.sh` script for optimal resource management
 
 ## 🛠️ Troubleshooting
 
 ### Common Issues
 
-**Issue**: High memory consumption
-- **Solution**: Reduce log ingestion rate or implement archival policies
+**Issue**: Virtual environment not found
+```bash
+# Recreate the virtual environment
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-**Issue**: Missed alerts
-- **Solution**: Verify rule syntax and log source configuration
+**Issue**: Port 8080 already in use
+```bash
+# Kill the process using the port (Linux)
+lsof -ti:8080 | xargs kill -9
+```
 
-**Issue**: Performance degradation
-- **Solution**: Implement log rotation and retention policies
+**Issue**: Permission denied on run.sh
+```bash
+chmod +x run.sh
+./run.sh
+```
+
+**Issue**: Frontend not starting
+```bash
+cd FRONT_END
+npm install
+npm run dev
+```
 
 ## 📚 Technology Stack
 
-- **Frontend**: TypeScript with modern web framework
-- **Backend**: Node.js with event-driven architecture
-- **Processing**: Python for advanced analytics
-- **Styling**: CSS for UI components
-- **Integration**: Suricata IDS/IPS
+| Component | Technology |
+|-----------|------------|
+| **Backend** | Python 3.8+ |
+| **API Server** | Python (Flask/FastAPI) |
+| **Frontend** | Node.js, npm, Vite |
+| **UI Framework** | TypeScript |
+| **Styling** | CSS |
+| **SIEM Core** | Python event processing |
+| **Integration** | Suricata IDS/IPS |
+
+## 📖 Additional Resources
+
+- **Simulation & Testing**: See [SIMULATION_GUIDE.md](./SIMULATION_GUIDE.md) for attack simulation scenarios
+- **Component Details**:
+  - `ULM.py` - Main SIEM analyzer
+  - `auth_processor.py` - Authentication log analysis
+  - `syslog_processor.py` - System log analysis
+  - `suricata_processor.py` - Network threat detection
+  - `backend.py` - REST API backend
 
 ## 🤝 Contributing
 
@@ -343,7 +366,7 @@ We welcome contributions! Please follow these steps:
 
 ### Guidelines
 - Follow existing code style
-- Add tests for new features
+- Test your changes thoroughly
 - Update documentation
 - Include security considerations
 
@@ -355,7 +378,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For issues, questions, or contributions:
 - **GitHub Issues**: [Create an issue](https://github.com/future1245/SIEM-log-analysis-tool/issues)
-- **Documentation**: Check the [docs](./docs) directory
+- **Documentation**: Check the markdown files in root directory
 - **Security Concerns**: Please report privately to maintainers
 
 ## 🎓 Learn More
@@ -363,7 +386,6 @@ For issues, questions, or contributions:
 - [SIEM Best Practices](https://www.nist.gov/cyberframework)
 - [Linux Log Formats](https://tools.ietf.org/html/rfc5424)
 - [Suricata Documentation](https://docs.suricata.io/)
-- [Detection Rule Development](./docs/rule-development.md)
 
 ---
 
